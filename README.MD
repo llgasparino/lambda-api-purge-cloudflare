@@ -75,4 +75,5 @@ Faça um push (ou merge) para o branch `main`. A Action será disparada automati
 ## 📜 Licença
 
 Este projeto é licenciado sob a licença MIT.
+
 ````
