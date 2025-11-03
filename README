@@ -1,0 +1,78 @@
+# AWS Lambda API Cloudflare Purger
+
+<p align="left">
+  <a href="https://hits.dwyl.com/llgasparino/lambda-api-purge-cloudflare">
+    <img src="https://hits.dwyl.com/llgasparino/lambda-api-purge-cloudflare.svg" alt="Visitors"/>
+  </a>
+  <a href="https://github.com/llgasparino/lambda-api-purge-cloudflare/stargazers">
+    <img src="https://img.shields.io/github/stars/llgasparino/lambda-api-purge-cloudflare?style=social" alt="GitHub Stars">
+  </a>
+  <a href="https://github.com/llgasparino/lambda-api-purge-cloudflare/network/members">
+    <img src="https://img.shields.io/github/forks/llgasparino/lambda-api-purge-cloudflare?style=social" alt="GitHub Forks">
+  </a>
+</p>
+
+<p align="left">
+  <img src="https://img.shields.io/badge/Terraform-~>5.0-blue?logo=terraform" alt="Terraform">
+  <img src="https://img.shields.io/badge/AWS_Provider-~>5.0-orange?logo=amazon-aws" alt="AWS Provider">
+  <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python" alt="Python">
+</p>
+
+---
+
+Este projeto provisiona um endpoint de API seguro (via AWS API Gateway) que aciona uma função Lambda para limpar (purgar) o cache de **prefixos** no Cloudflare.
+
+A Lambda é configurada para rodar dentro de uma VPC, garantindo que todas as requisições de API para o Cloudflare saiam de um IP estático (via AWS NAT Gateway).
+
+## 🚀 Funcionalidades
+
+* **Gatilho:** Endpoint do API Gateway protegido por chave (`x-api-key`).
+* **Ação:** Limpa o cache (purge) de uma lista de prefixos no Cloudflare (ex: `site.com/pasta/`).
+* **Rede:** Executa em subnets privadas e usa um NAT Gateway para IP de saída fixo.
+* **Segurança:** Exige uma chave de API (`x-api-key`) para ser invocado.
+* **CORS:** Configurado para aceitar requisições de navegadores (default: `*`).
+
+## 🛠️ Como Usar a API
+
+Após o deploy, o Terraform gerará uma URL de endpoint e uma Chave de API. Para disparar o purge, faça a seguinte requisição:
+
+* **Método:** `POST`
+* **Endpoint (URL):** `[URL_DE_INVOCACAO_DO_API_GATEWAY]/[STAGE]/[PATH]`
+* **Header Obrigatório:**
+    * `x-api-key`: `[VALOR_DA_API_KEY]`
+
+**Exemplo (curl):**
+```bash
+curl -X POST \
+  -H "x-api-key: SEU_VALOR_DA_API_KEY_AQUI" \
+  "[https://xxxxx.execute-api.us-east-1.amazonaws.com/v1/purge-cache](https://xxxxx.execute-api.us-east-1.amazonaws.com/v1/purge-cache)"
+```
+
+## 📦 Deploy (via GitHub Actions)
+
+Este repositório está configurado para deploy automático usando GitHub Actions.
+
+### 1. Pré-requisitos
+
+Configure os seguintes **Segredos** no seu repositório GitHub (`Settings > Secrets and variables > Actions`):
+
+* `AWS_ACCESS_KEY_ID`: Chave de acesso AWS.
+* `AWS_SECRET_ACCESS_KEY`: Chave secreta AWS.
+* `CLOUDFLARE_API_TOKEN`: Token da API do Cloudflare.
+* `CLOUDFLARE_ZONE_ID`: ID da Zona do Cloudflare.
+* `CLOUDFLARE_PREFIXES`: Lista de prefixos para limpar, separados por vírgula (ex: `site1.com/,site2.com/`).
+* `VPC_SUBNET_IDS`: IDs das subnets privadas, separadas por vírgula (ex: `subnet-abc,subnet-xyz`).
+* `VPC_SECURITY_GROUP_IDS`: IDs dos SGs, separados por vírgula (ex: `sg-123`).
+
+### 2. `main.tf`
+
+* Você também deve atualizar o arquivo `main.tf` para apontar para o seu próprio bucket S3 de armazenamento de estado (terraform state backend).
+
+### 3. Executando o Deploy
+
+Faça um push (ou merge) para o branch `main`. A Action será disparada automaticamente, executando `terraform init`, `plan` e `apply`. Os outputs `api_endpoint_url` e `api_key_value` podem ser consultados nos logs da pipeline ou no console da AWS (API Gateway).
+
+## 📜 Licença
+
+Este projeto é licenciado sob a licença MIT.
+````
